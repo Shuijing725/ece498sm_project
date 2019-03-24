@@ -11,4 +11,8 @@ https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8500547
 ### papers:
 https://arxiv.org/pdf/1809.07941.pdf
 
+https://velodynelidar.com/lidar/hdlpressroom/pdf/Articles/Lidar-based%20lane%20marker%20detection%20and%20mapping.pdf
+
+http://www.cs.toronto.edu/~slwang/lane_detect.pdf
+
 ### github:
