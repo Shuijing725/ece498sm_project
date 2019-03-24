@@ -15,4 +15,6 @@ https://velodynelidar.com/lidar/hdlpressroom/pdf/Articles/Lidar-based%20lane%20m
 
 http://www.cs.toronto.edu/~slwang/lane_detect.pdf
 
+https://www.researchgate.net/publication/260522418_A_Sensor-Fusion_Drivable-Region_and_Lane-Detection_System_for_Autonomous_Vehicle_Navigation_in_Challenging_Road_Scenarios
+
 ### github:
