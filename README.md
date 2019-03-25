@@ -3,8 +3,10 @@
 ### papers: 
 https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8500547
 
+### Dataset: 
+https://github.com/TuSimple/tusimple-benchmark/wiki
+
 ### github:
-#### Dataset: download from https://github.com/TuSimple/tusimple-benchmark/wiki
 #### Code: https://github.com/MaybeShewill-CV/lanenet-lane-detection
 
 ## Sensor fusion approach:
@@ -17,4 +19,6 @@ http://www.cs.toronto.edu/~slwang/lane_detect.pdf
 
 https://www.researchgate.net/publication/260522418_A_Sensor-Fusion_Drivable-Region_and_Lane-Detection_System_for_Autonomous_Vehicle_Navigation_in_Challenging_Road_Scenarios
 
+### Dataset: 
+http://www.cvlibs.net/datasets/kitti/eval_road.php
 ### github:
