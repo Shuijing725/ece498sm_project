@@ -20,5 +20,6 @@ http://www.cs.toronto.edu/~slwang/lane_detect.pdf
 https://www.researchgate.net/publication/260522418_A_Sensor-Fusion_Drivable-Region_and_Lane-Detection_System_for_Autonomous_Vehicle_Navigation_in_Challenging_Road_Scenarios
 
 ### Dataset: 
+A good summary of all avaliable datasets: https://mighty.ai/blog/top_open_source_lidar_driving_datasets/
 http://www.cvlibs.net/datasets/kitti/eval_road.php
 ### github:
