@@ -1,7 +1,7 @@
 # ece498sm_project
 ## Vision-based lane detection: 
 ### papers: 
-https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8500547
+https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8500547 
 Road detection using KITTI dataset:https://ieeexplore.ieee.org/abstract/document/7759717
 
 ### Dataset: 
