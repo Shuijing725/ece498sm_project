@@ -22,11 +22,15 @@ import torchvision.models as models
 
 # load the original images from folder
 # return value: nested list of images, seperated by batch_size
-def load_images(path, batch_size, img_size, train_test='train'):
-	label_batches = []
-	cur_label = []
-	img_batches = []
-	cur_batch = []
+def load_images(path, batch_size, img_size, train_test='train', num_gpu = 1, device = None):
+	# sanity check
+	if num_gpu > 0:
+		assert (device is not None)
+
+	labels = []
+	label_batch = []
+	img_batches = None
+	cur_batch = None
 	count = 0
 	if train_test == 'train':
 		l = [('um', 95), ('umm', 96), ('uu', 98)]
@@ -41,24 +45,52 @@ def load_images(path, batch_size, img_size, train_test='train'):
 			else:
 				img_path = os.path.join(path, str(prefix + '_0000' + str(i)+'.png'))
 			img = cv2.imread(img_path)
-			img = cv2.resize(img, (img_size, img_size))
-			cur_batch.append(img)
-			cur_label.append(str(prefix + '_00000' + str(i)))
-			count += 1
+			img = cv2.resize(img, (img_size, img_size)) # (224, 224, 3)
+			# normalize img to [0, 1]
+			img  = cv2.normalize(img, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+			# change img to channel first (w, h, 3) -> (3, w, h)
+			img = np.moveaxis(img, -1, 0) # (3, 224, 224)
+			# convert img to torch tensor
+			img = torch.from_numpy(img)
+			# convert the type of img to be float tensor
+			img = img.type(torch.FloatTensor)
+			if num_gpu > 0:
+				img = img.to(device)
+			img = torch.unsqueeze(img, 0) # (3, 224, 224) -> (1, 3, 224, 224)
+			# append image label
+			label_batch.append(str(prefix + '_road_0000' + str(i)))
 			if count % batch_size == 0:
-				label_batches.append(cur_label)
-				cur_label = []
-				img_batches.append(cur_batch)
-				cur_batch = []
+				# if cur_batch is full with batch_size images
+				if cur_batch is not None:
+					# append label_batch
+					labels.append(label_batch)
+					label_batch = []
+					# append cur_batch to img_batches
+					if img_batches is not None:
+						cur_batch = torch.unsqueeze(cur_batch, 0)
+						img_batches = torch.cat((img_batches, cur_batch), 0)
+					else:
+						img_batches = torch.unsqueeze(cur_batch, 0)
+				# append this img to cur_batch
+				cur_batch = img
+			else:
+				cur_batch = torch.cat((cur_batch, img), 0)
+			count += 1
 
-	return img_batches, label_batches
+	return img_batches, labels
 
 # load the ground truth lane markings from folder and convert them to the same form as the output of CNN
 # return value: masked 2D image, with red = 255, pink = 0
-def load_ground_truth(path, batch_size, output_size, road_lane = 'road'):
-	img_batches = []
-	cur_batch = []
+def load_ground_truth(path, batch_size, output_size, road_lane = 'road', num_gpu = 1, device = None):
+	# sanity check
+	if num_gpu > 0:
+		assert (device is not None)
+
+	img_batches = None
+	cur_batch = None
 	count = 0
+	labels = []
+	label_batch = []
 	if road_lane == 'road':
 		# load the 3 sets of images from path
 		for prefix, tot in [('um', 95), ('umm', 96), ('uu', 98)]:
@@ -75,11 +107,40 @@ def load_ground_truth(path, batch_size, output_size, road_lane = 'road'):
 				# masked_img: 2d array, red: 255, else: 0
 				img = cv2.inRange(img, low_red, high_red)
 				img = cv2.resize(img, (output_size, output_size))
-				cur_batch.append(img)
-				count += 1
+				# normalize img to [0, 1]
+				img = cv2.normalize(img, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+				# change img to channel first (w, h, 3) -> (3, w, h)
+				img = np.moveaxis(img, -1, 0)  # (3, 224, 224)
+				# convert img to torch tensor
+				img = torch.from_numpy(img)
+				# convert the type of img to be float tensor
+				img = img.type(torch.FloatTensor)
+				if num_gpu > 0:
+					img = img.to(device)
+				img = torch.unsqueeze(img, 0)  # (3, 224, 224) -> (1, 3, 224, 224)
+				if num_gpu > 0:
+					img = img.to(device)
+				img = torch.unsqueeze(img, 0)  # (3, 224, 224) -> (1, 3, 224, 224)
+				# append image label
+				label_batch.append(str(prefix + '_road_0000' + str(i)))
 				if count % batch_size == 0:
-					img_batches.append(cur_batch)
-					cur_batch = []
+					# if cur_batch is full with batch_size images
+					if cur_batch is not None:
+						# append label_batch
+						labels.append(label_batch)
+						label_batch = []
+						# append cur_batch to img_batches
+						if img_batches is not None:
+							cur_batch = torch.unsqueeze(cur_batch, 0)
+							img_batches = torch.cat((img_batches, cur_batch), 0)
+						else:
+							img_batches = torch.unsqueeze(cur_batch, 0)
+					# append this img to cur_batch
+					cur_batch = img
+				else:
+					cur_batch = torch.cat((cur_batch, img), 0)
+				count += 1
+
 
 	else:
 		for i in range(95):
@@ -95,18 +156,43 @@ def load_ground_truth(path, batch_size, output_size, road_lane = 'road'):
 			# masked_img: 2d array, red: 255, else: 0
 			img = cv2.inRange(img, low_red, high_red)
 			img = cv2.resize(img, (output_size, output_size))
-			cur_batch.append(img)
-			count += 1
+			# change img to channel first (w, h, 3) -> (3, w, h)
+			img = np.moveaxis(img, -1, 0)  # (3, 224, 224)
+			# convert img to torch tensor
+			img = torch.from_numpy(img)
+			# convert the type of img to be float tensor
+			img = img.type(torch.FloatTensor)
+			if num_gpu > 0:
+				img = img.to(device)
+			img = torch.unsqueeze(img, 0)  # (3, 224, 224) -> (1, 3, 224, 224)
+			if num_gpu > 0:
+				img = img.to(device)
+			img = torch.unsqueeze(img, 0)  # (3, 224, 224) -> (1, 3, 224, 224)
+			# append image label
+			label_batch.append(str('um_lane_00000' + str(i)))
 			if count % batch_size == 0:
-				img_batches.append(cur_batch)
-				cur_batch = []
+				# if cur_batch is full with batch_size images
+				if cur_batch is not None:
+					# append label_batch
+					labels.append(label_batch)
+					label_batch = []
+					# append cur_batch to img_batches
+					if img_batches is not None:
+						img_batches = torch.cat(img_batches, cur_batch)
+					else:
+						img_batches = torch.unsqueeze(cur_batch, 0)
+				# append this img to cur_batch
+				cur_batch = img
+			else:
+				cur_batch = torch.cat(cur_batch, img)
+			count += 1
 
-	return img_batches
+	return img_batches, labels
 
 
 # ### Design the model
 class RoadDetector(nn.Module):
-	def __init__(self, num_gpu=1, num_classes=2):
+	def __init__(self, num_gpu=1, num_classes=1):
 		super(RoadDetector, self).__init__()
 		self.ngpu = num_gpu
 
@@ -116,18 +202,37 @@ class RoadDetector(nn.Module):
 		self.conv_ncl = nn.Conv2d(1024, num_classes, 1)
 		self.up_conv1 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2)
 
+		self.bn = nn.BatchNorm2d(1024)
+		self.relu = nn.ReLU(inplace=True)
+
 
 	# the architecture is taken from Table I of https://ieeexplore.ieee.org/abstract/document/7759717
-	def forward(self, x):
-		x = models.vgg16(pretrained=True)
+	def forward(self, input):
+		vgg = models.vgg16(pretrained=True).cuda()
 		# remove the fully-connected layers out
-		x = x.features
+		encoder = vgg.features
+		x = encoder(input)
 		# add the transpose convolutional layers
 		x = self.fc_conv(x)
+		x = self.relu(x)
 		x = self.fc_conv2(x)
+		x = self.bn(x)
+		x = self.relu(x)
 		x = self.conv_ncl(x)
-		for i in range(5):
-			x = self.up_conv1(x)
+		x = self.relu(x)
+
+		# decoder
+		x = self.up_conv1(x)
+		x = self.relu(x)
+		x = self.up_conv1(x)
+		x = self.relu(x)
+
+		x = self.up_conv1(x)
+		x = self.relu(x)
+		x = self.up_conv1(x)
+		x = self.relu(x)
+		x = self.up_conv1(x)
+		x = self.relu(x)
 
 		return x
 
@@ -187,18 +292,15 @@ def calculate_val_accuracy(valloader):
 #         classes[i], 100 * class_correct[i] / class_total[i]))
 
 def main():
-	# Number of workers for dataloader
-	workers = 4
-
 	# Batch size during training
-	batch_size = 10
+	batch_size = 50
 
 	# Spatial size of training images. The image size of original images vary from 15 to 250.
 	# But to train our CNN we must have the fixed size for the inputs.
 	# All images will be resized to this size using a transformer.
 	###### TO BE CHANGED!!!!!!!!!!!!!!!!!!!!!!!!
 	img_size = 224
-	output_size = 590
+	output_size = 222
 	# Number of training epochs
 	num_epochs = 15
 
@@ -215,41 +317,39 @@ def main():
 	manualSeed = 999
 	torch.manual_seed(manualSeed)
 
+	# Decide which device(GPU or CPU) we want to run on
+	device = torch.device("cuda:0" if (torch.cuda.is_available() and num_gpu > 0) else "cpu")
+
 	# Load the data
 	img_path = '/home/shuijing/Desktop/ece498sm_project/data_road/training/image_2'
 	label_path = '/home/shuijing/Desktop/ece498sm_project/data_road/training/gt_image_2'
 	test_img_path = '/home/shuijing/Desktop/ece498sm_project/data_road/testing/image_2'
-	train_data, _ = load_images(img_path, batch_size, img_size, train_test='train')
-	train_label = load_ground_truth(label_path, batch_size, output_size, road_lane='road')
-	test_data, test_labels = load_images(test_img_path, batch_size, img_size, train_test='test')
+	train_data, _ = load_images(img_path, batch_size, img_size, train_test='train', device = device)
+	train_label, _ = load_ground_truth(label_path, batch_size, output_size, road_lane='road', device = device)
+	test_data, test_data_labels = load_images(test_img_path, batch_size, img_size, train_test='test', device = device)
 
-	# Decide which device(GPU or CPU) we want to run on
-	device = torch.device("cuda:0" if (torch.cuda.is_available() and num_gpu > 0) else "cpu")
 
 	classifier = RoadDetector(num_gpu).to(device)
-
-	# Handle multi-gpu if desired
-	if num_gpu > 0:
-		classifier = nn.DataParallel(classifier, list(range(num_gpu)))
-
 	# training parameters
-	criterion = nn.CrossEntropyLoss()  # loss function
-	optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)
+	criterion = nn.MSELoss()  # loss function
+	optimizer = optim.SGD(classifier.parameters(), lr=0.1, momentum=0.9)
 
 	# Training Loop, no need to run if you already loaded the weights
-	for epoch in range(20):  # loop over the dataset multiple times
+	for epoch in range(num_epochs):  # loop over the dataset multiple times
+		print("epoch:", epoch)
 		running_loss = 0.0
 		for inputs, labels in zip(train_data, train_label):
-			if num_gpu > 0:
-				inputs = inputs.cuda()
-				labels = labels.cuda()
-
+			# print("inputs:", inputs.size())
+			# print("labels:", labels.size())
 			# zero out the parameter gradients
 			# Every time a variable is back propogated through, the gradient will be accumulated instead of being replaced.
 			optimizer.zero_grad()
 
 			# forward + backward + optimize
 			outputs = classifier(inputs)
+			# print("outputs:", outputs.size())
+			# labels = labels.type(torch.long)
+			# outputs = outputs.type(torch.long)
 			loss = criterion(outputs, labels)
 
 			# loss.backward() computes dloss/dx for every parameter x
@@ -260,17 +360,24 @@ def main():
 
 			# print statistics
 			running_loss += loss.item()
+		print('loss = ', running_loss)
 
 
 	print('Finished Training')
-
+	torch.save(classifier.state_dict(), "./fcn.pth")
 	pred_path = '/home/shuijing/Desktop/ece498sm_project/predictions'
 	if not os.path.exists(pred_path):
 		os.makedirs(pred_path)
 	# testing
-	for img_batch, label_batch in zip(test_data, test_labels):
+	for img_batch, label_batch in zip(test_data, test_data_labels):
 		for img, label in zip(img_batch, label_batch):
+			img = torch.unsqueeze(img, 0)
 			pred = classifier(img)
+			print('pred:', pred)
+			pred = (Variable(pred).data).cpu().numpy() # convert tensor to numpy
+			print('pred1:', pred)
+			pred = np.moveaxis(pred, 0, -1) # convert from (channel, row, col) to (row, col, channel)
+			pred = cv2.resize(pred, (img_size, img_size))
 			cv2.imwrite(os.path.join(pred_path, str(label + '.png')), pred)
 
 	# save the weights into "./MP2weights.pth"
