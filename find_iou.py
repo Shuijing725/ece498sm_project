@@ -7,6 +7,9 @@ fcn_folder = '/home/shuijing/Desktop/ece498sm_project/runs/1556505662.8736737'
 knn_folder = '/home/shuijing/Desktop/ece498sm_project/knn_train'
 gt_folder = '/home/shuijing/Desktop/ece498sm_project/data_road/training/gt_image_2'
 
+# gt_folder: the ground truth labels folder (/data_road/training/gt_image_2)
+# folder: the folder containing your results
+# If you are running it on a single image, just get rid of the outer-most for loop
 def calc_iou(gt_folder, folder):
     k = 0
     iou = defaultdict(float)
