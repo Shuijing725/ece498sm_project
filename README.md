@@ -1,6 +1,7 @@
 # ece498sm_project
 ## Files and folders:
 * fcn_detector: code for fully convolutional network 
+* 498_LidarRead: code for LIDAR heatmap method
 
 ## Resources and references: 
 ### Vision-based lane detection: 
