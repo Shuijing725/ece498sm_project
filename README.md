@@ -10,6 +10,10 @@ https://github.com/TuSimple/tusimple-benchmark/wiki
 ### github:
 #### Code: https://github.com/MaybeShewill-CV/lanenet-lane-detection
 
+## LIDAR-base road detection:
+### github:
+#### code: https://github.com/LidarPerception/kitti_ros
+
 ## Sensor fusion approach:
 ### papers:
 https://arxiv.org/pdf/1809.07941.pdf
