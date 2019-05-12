@@ -1,7 +1,14 @@
 # ece498sm_project
 ## Files and folders:
-* fcn_detector: code for fully convolutional network 
+* fcn_detector: code for fully convolutional network (FCN)
+* fcn_output: testing results of FCN
+* knn_output: testing results of k-nearest neighbor
+* runs: training results of FCN
+* runs_fusion: sensor fusion results
 * 498_LidarRead: code for LIDAR heatmap method
+* find_iou.py: calculates the Intersection over Union (IoU) of the result images
+* knn.py: code for k-nearest neighbor
+* road_detection.py: PyTorch implementation of FCN, has errors and doesn't work
 
 ## Resources and references: 
 ### Vision-based lane detection: 
