@@ -1,6 +1,7 @@
 # ece498sm_project
+Road Detection by combining camera and LIDAR
 ## Files and folders:
-* fcn_detector: code for fully convolutional network (FCN)
+* fcn_detector: code for fully convolutional network (FCN) in Tensorflow
 * fcn_output: testing results of FCN
 * knn_output: testing results of k-nearest neighbor
 * runs: training results of FCN
