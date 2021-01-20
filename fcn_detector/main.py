@@ -151,7 +151,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
 
     sess.run(tf.global_variables_initializer())
 
-    lr = 0.0001
+    lr = 3e-4
 
     print("Training...")
     print()
@@ -198,8 +198,8 @@ def run():
         get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
 
         # TODO: Build NN using load_vgg, layers, and optimize function
-        epochs = 30
-        batch_size = 8
+        epochs = 40
+        batch_size = 10
 
         # TF placeholders
         correct_label = tf.placeholder(tf.int32, [None, None, None, num_classes], name='correct_label')
